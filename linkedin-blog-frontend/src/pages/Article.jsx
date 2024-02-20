@@ -21,6 +21,13 @@ const Article = () => {
 		loadArticleInfo();
 	}, []);
 
+	const updateUpvotes = async() => {
+		await axios.put(`/api/articles/${articleId}/upvote`, {upvotes: articleInfo.upvotes + 1});
+		setArticleInfo( prevState => (
+			{...prevState, upvotes: prevState.upvotes + 1}
+		));
+	}
+
 	const article = articles.find(article => article.name === articleId);
 
 	if(!article) {
@@ -30,7 +37,10 @@ const Article = () => {
 	return (
 		<> 
 			<h1> {article.title} </h1>
-			<p> This article has {articleInfo.upvotes} upvotes </p>
+			<div className="upvotes-section">
+				<p> This article has {articleInfo.upvotes} upvotes </p>
+				<button onClick = {updateUpvotes}> Upvote me! </button>
+			</div>
 			{article.content.map( (paragraph,i) => (
 				<p key={i}> {paragraph} </p>
 			))}
