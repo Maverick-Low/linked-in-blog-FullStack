@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom'
 import articles from './article-content';
 import NotFound from './NotFound';
 import CommentsList from '../components/CommentsList';
+import AddCommentForm from '../components/AddCommentForm';
 import axios from 'axios';
 
 const Article = () => {
@@ -22,10 +23,11 @@ const Article = () => {
 	}, []);
 
 	const updateUpvotes = async() => {
-		await axios.put(`/api/articles/${articleId}/upvote`, {upvotes: articleInfo.upvotes + 1});
+		const response = await axios.put(`/api/articles/${articleId}/upvote`, {upvotes: articleInfo.upvotes + 1});
 		setArticleInfo( prevState => (
 			{...prevState, upvotes: prevState.upvotes + 1}
 		));
+		console.log(response.data.upvotes);
 	}
 
 	const article = articles.find(article => article.name === articleId);
@@ -44,6 +46,9 @@ const Article = () => {
 			{article.content.map( (paragraph,i) => (
 				<p key={i}> {paragraph} </p>
 			))}
+			<AddCommentForm
+				articleName={articleId}
+				onArticleUpdated={updatedArticle => setArticleInfo(updatedArticle)}/>
 			<CommentsList comments = {articleInfo.comments}/>
 		</>
 	);	
