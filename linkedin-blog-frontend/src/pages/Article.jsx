@@ -18,25 +18,23 @@ const Article = () => {
 		const loadArticleInfo = async() => {
             const token = user && await user.getIdToken();
             const headers = token ? {authtoken: token} : {};
-			const response = await axios.get(`/api/articles/${articleId}`, {
-                headers: headers,
-            });
+			const response = await axios.get(`/api/articles/${articleId}`, {headers});
 			const articleInfoDB = response.data;
 			setArticleInfo(articleInfoDB);
 		} 
 		
 		loadArticleInfo();
+        
 	}, []);
 
 	const updateUpvotes = async() => {
         const token = user && await user.getIdToken();
         const headers = token ? {authtoken: token} : {};
-		const response = await axios.put(`/api/articles/${articleId}/upvote`, {upvotes: articleInfo.upvotes + 1}, null, {
+		const response = await axios.put(`/api/articles/${articleId}/upvote`, null, {
             headers: headers,
         });
         const updatedArticle = response.data;
 		setArticleInfo(updatedArticle);
-		
 	}
 
 	const article = articles.find(article => article.name === articleId);

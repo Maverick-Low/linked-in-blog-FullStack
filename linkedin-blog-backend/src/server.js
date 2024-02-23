@@ -21,14 +21,13 @@ app.use( async(req, res, next) => {
     const {authtoken} = req.headers;  // Get auth token from client side
     if(authtoken) {
         try {
-            const user = await admin.auth().verifyIdToken(authtoken); // Load corresponding firebase user from auth token
-            req.user = user;
-        } catch (error) {
+            req.user = await admin.auth().verifyIdToken(authtoken); // Load corresponding firebase user from auth token
+        } catch (e) {
             return res.sendStatus(400);
         }  
+    } else {
+        req.user = {lol: 0};
     }
-
-    req.user = req.user || {};
 
     next(); // Move onto route handlers below
 });
@@ -37,6 +36,8 @@ app.use( async(req, res, next) => {
 app.get('/api/articles/:name', async (req, res) => {
     const {name} = req.params;
     const {uid} = req.user;
+    console.log(req.headers);
+
 
     // Make a query
     const article = await db.collection('articles').findOne({name}); // articles is the collection, we are retrieving one document within this collection
@@ -70,7 +71,6 @@ app.put('/api/articles/:name/upvote', async (req, res) => {
     if(article) {
         const upvoteIds = article.upvoteIds || []; // Retrieve array of userIds that have upvoted the article
         const canUpvote = uid && !upvoteIds.includes(uid); // Check if user has already upvoted the article
-     
         if(canUpvote) {
             // Update the upvotes in the database
             await db.collection('articles').updateOne( {name}, {
