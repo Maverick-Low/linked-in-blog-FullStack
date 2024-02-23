@@ -9,7 +9,8 @@ import useUser from '../hooks/useUser';
 
 const Article = () => {
 
-	const [articleInfo, setArticleInfo] = useState({upvotes: 0, comments: []}); 
+	const [articleInfo, setArticleInfo] = useState({upvotes: 0, comments: [], canUpvote: false});
+    const {canUpvote} = articleInfo;
 	const { articleId } = useParams(); // Gets the article id from the url parameter
 	const {user , isLoading} = useUser();
 
@@ -22,10 +23,12 @@ const Article = () => {
 			const articleInfoDB = response.data;
 			setArticleInfo(articleInfoDB);
 		} 
-		
-		loadArticleInfo();
+		if(isLoading){ 
+            loadArticleInfo();
+        }
+	
         
-	}, []);
+	}, [isLoading, user]);
 
 	const updateUpvotes = async() => {
         const token = user && await user.getIdToken();
@@ -48,8 +51,9 @@ const Article = () => {
 			<h1> {article.title} </h1>
 			<div className="upvotes-section">
 				<p> This article has {articleInfo.upvotes} upvotes </p>
+                <div> {canUpvote} </div>
 				{user
-					? <button onClick = {updateUpvotes}> Upvote me! </button>
+					? <button onClick = {updateUpvotes}> {canUpvote ? "Upvote me!" : "Already Upvoted"} </button>
 					: <button onClick = { () => {console.log('Redirect to login');} }> Login to upvote </button>
 				}
 				

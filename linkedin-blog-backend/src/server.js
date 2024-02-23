@@ -25,9 +25,9 @@ app.use( async(req, res, next) => {
         } catch (e) {
             return res.sendStatus(400);
         }  
-    } else {
-        req.user = {lol: 0};
     }
+
+    req.user = req.user || {}
 
     next(); // Move onto route handlers below
 });
@@ -36,8 +36,6 @@ app.use( async(req, res, next) => {
 app.get('/api/articles/:name', async (req, res) => {
     const {name} = req.params;
     const {uid} = req.user;
-    console.log(req.headers);
-
 
     // Make a query
     const article = await db.collection('articles').findOne({name}); // articles is the collection, we are retrieving one document within this collection
@@ -117,3 +115,4 @@ connectToDb( () => {
         console.log('Server is listening on port 3000');
     });
 })
+
