@@ -5,7 +5,7 @@ import admin from 'firebase-admin';
 
 // Firebase setup
 const credentials = JSON.parse(
-    fs.readFileSync('../credentials.json')
+    fs.readFileSync('./credentials.json')
 );
 
 admin.initializeApp({
@@ -18,16 +18,17 @@ app.use(express.json());
 // Express middleware, next function called when middleware processing finished
 app.use( async(req, res, next) => {
 
-    const {authToken} = req.headers;  // Get auth token from client side
-    
-    if(authToken) {
+    const {authtoken} = req.headers;  // Get auth token from client side
+    if(authtoken) {
         try {
-            const user = await admin.auth().verifyIdToken(authToken); // Load corresponding firebase user from auth token
+            const user = await admin.auth().verifyIdToken(authtoken); // Load corresponding firebase user from auth token
             req.user = user;
         } catch (error) {
-            res.sendStatus(400);
+            return res.sendStatus(400);
         }  
     }
+
+    req.user = req.user || {};
 
     next(); // Move onto route handlers below
 });
@@ -40,10 +41,9 @@ app.get('/api/articles/:name', async (req, res) => {
     // Make a query
     const article = await db.collection('articles').findOne({name}); // articles is the collection, we are retrieving one document within this collection
     
-
     if(article) {
         const upvoteIds = article.upvoteIds || []; // Default value = empty array
-        article.canUpvote = uid && !upvoteIds.include(uid); // Check if user has already upvoted
+        article.canUpvote = uid && !upvoteIds.includes(uid); // Check if user has already upvoted
         res.json(article);
     } 
     else { res.sendStatus(404); }
@@ -69,7 +69,7 @@ app.put('/api/articles/:name/upvote', async (req, res) => {
     
     if(article) {
         const upvoteIds = article.upvoteIds || []; // Retrieve array of userIds that have upvoted the article
-        const canUpvote = uid && !upvoteIds.include(uid); // Check if user has already upvoted the article
+        const canUpvote = uid && !upvoteIds.includes(uid); // Check if user has already upvoted the article
      
         if(canUpvote) {
             // Update the upvotes in the database
@@ -97,7 +97,7 @@ app.post('/api/articles/:name/comments', async (req, res) => {
 
     // Update the database with new comments
     await db.collection('articles').updateOne({name}, {
-        $push: {comments: {email, text}} // 
+        $push: {comments: {postedBy: email, text}}
     })
 
     // Retrieve the article and send it

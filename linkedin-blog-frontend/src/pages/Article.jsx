@@ -11,13 +11,16 @@ const Article = () => {
 
 	const [articleInfo, setArticleInfo] = useState({upvotes: 0, comments: []}); 
 	const { articleId } = useParams(); // Gets the article id from the url parameter
-
 	const {user , isLoading} = useUser();
 
 	// Set article Info to have the upvotes and comments retrieved from the database
 	useEffect( () => {
 		const loadArticleInfo = async() => {
-			const response = await axios.get(`/api/articles/${articleId}`);
+            const token = user && await user.getIdToken();
+            const headers = token ? {authtoken: token} : {};
+			const response = await axios.get(`/api/articles/${articleId}`, {
+                headers: headers,
+            });
 			const articleInfoDB = response.data;
 			setArticleInfo(articleInfoDB);
 		} 
@@ -26,12 +29,14 @@ const Article = () => {
 	}, []);
 
 	const updateUpvotes = async() => {
-		const response = await axios.put(`/api/articles/${articleId}/upvote`, {upvotes: articleInfo.upvotes + 1});
-		setArticleInfo( prevState => (
-			{...prevState, upvotes: prevState.upvotes + 1}
-		));
-		console.log(response.data.upvotes);
-		console.log(user);
+        const token = user && await user.getIdToken();
+        const headers = token ? {authtoken: token} : {};
+		const response = await axios.put(`/api/articles/${articleId}/upvote`, {upvotes: articleInfo.upvotes + 1}, null, {
+            headers: headers,
+        });
+        const updatedArticle = response.data;
+		setArticleInfo(updatedArticle);
+		
 	}
 
 	const article = articles.find(article => article.name === articleId);
