@@ -10,7 +10,10 @@ linkedin-blog-backend/.next/  # Next.js build directory
 # Ignore dependency lock files
 linkedin-blog-frontend/package-lock.json
 linkedin-blog-backend/package-lock.json
+
+# Ignore database stuff
 linkedin-blog-backend/mongo-db-data/
+linkedin-blog-backend/credentials.json
 
 # Ignore environment variables files
 linkedin-blog-frontend/.env

@@ -1,40 +1,89 @@
 import express from "express";
 import {db, connectToDb} from './db.js';
+import fs from 'fs';
+import admin from 'firebase-admin';
+
+// Firebase setup
+const credentials = JSON.parse(
+    fs.readFileSync('../credentials.json')
+);
+
+admin.initializeApp({
+    credential: admin.credential.cert(credentials)
+});
 
 const app = express();
 app.use(express.json());
 
+// Express middleware, next function called when middleware processing finished
+app.use( async(req, res, next) => {
+
+    const {authToken} = req.headers;  // Get auth token from client side
+    
+    if(authToken) {
+        try {
+            const user = await admin.auth().verifyIdToken(authToken); // Load corresponding firebase user from auth token
+            req.user = user;
+        } catch (error) {
+            res.sendStatus(400);
+        }  
+    }
+
+    next(); // Move onto route handlers below
+});
+
 // Retrieve article from database based on name
 app.get('/api/articles/:name', async (req, res) => {
     const {name} = req.params;
+    const {uid} = req.user;
 
     // Make a query
     const article = await db.collection('articles').findOne({name}); // articles is the collection, we are retrieving one document within this collection
     
+
     if(article) {
+        const upvoteIds = article.upvoteIds || []; // Default value = empty array
+        article.canUpvote = uid && !upvoteIds.include(uid); // Check if user has already upvoted
         res.json(article);
     } 
     else { res.sendStatus(404); }
 });
 
+// Middleware to prevent the user from accessing the comment and upvote routes if they are not logged in
+app.use( (req, res, next) => {
+    if (req.user) {
+        next();
+    }
+    else {
+        res.sendStatus(401);
+    }
+})
+
 // Upvoting - PUT requests for updates
 app.put('/api/articles/:name/upvote', async (req, res) => {
 
     const {name} = req.params;
+    const {uid} = req.user;
 
-
-    // Update the upvotes in the database
-    await db.collection('articles').updateOne({name}, {
-        $inc: {upvotes: 1} // $inc means increment -> increment upvotes by 1
-    })
+    const article = await db.collection('articles').findOne({name});  // Retrieve the article
     
-    // Retrieve the article
-    const article = await db.collection('articles').findOne({name}); 
-
     if(article) {
-        res.json(article);
-    }
-    else {
+        const upvoteIds = article.upvoteIds || []; // Retrieve array of userIds that have upvoted the article
+        const canUpvote = uid && !upvoteIds.include(uid); // Check if user has already upvoted the article
+     
+        if(canUpvote) {
+            // Update the upvotes in the database
+            await db.collection('articles').updateOne( {name}, {
+                $inc: {upvotes: 1}, // $inc means increment -> increment upvotes by 1
+                $push: {upvoteIds: uid}, // Add user's id to the array of users that have upvoted the article
+            });
+        }
+
+        // Send back article with user upvote information included
+        const updatedArticle = await db.collection('articles').findOne({name}); 
+        res.json(updatedArticle);
+
+    } else {
         res.send('That article doesn\'t exist');
     }
 });
@@ -43,11 +92,12 @@ app.put('/api/articles/:name/upvote', async (req, res) => {
 app.post('/api/articles/:name/comments', async (req, res) => {
 
     const {name} = req.params;
-    const {postedBy, text} = req.body;
+    const {text} = req.body;
+    const {email} = req.user;
 
     // Update the database with new comments
     await db.collection('articles').updateOne({name}, {
-        $push: {comments: {postedBy, text}} // $push means array.push() in mongoDB
+        $push: {comments: {email, text}} // 
     })
 
     // Retrieve the article and send it
