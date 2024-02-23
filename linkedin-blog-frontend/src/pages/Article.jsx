@@ -9,7 +9,7 @@ import useUser from '../hooks/useUser';
 
 const Article = () => {
 
-	const [articleInfo, setArticleInfo] = useState({upvotes: 0, comments: [], canUpvote: false});
+	const [articleInfo, setArticleInfo] = useState({upvotes: 0, comments: [], canUpvote: true});
     const {canUpvote} = articleInfo;
 	const { articleId } = useParams(); // Gets the article id from the url parameter
 	const {user , isLoading} = useUser();
@@ -22,9 +22,12 @@ const Article = () => {
 			const response = await axios.get(`/api/articles/${articleId}`, {headers});
 			const articleInfoDB = response.data;
 			setArticleInfo(articleInfoDB);
+            return articleInfoDB;
 		} 
-		if(isLoading){ 
-            loadArticleInfo();
+		if(!isLoading){ 
+            const lol = loadArticleInfo();
+            
+            console.log("LOADEDINFO:", lol);
         }
 	
         
