@@ -15,6 +15,9 @@ linkedin-blog-backend/package-lock.json
 linkedin-blog-backend/mongo-db-data/
 linkedin-blog-backend/credentials.json
 
+# Ignore build folder
+linkedin-blog-backend/build
+
 # Ignore environment variables files
 linkedin-blog-frontend/.env
 linkedin-blog-backend/.env

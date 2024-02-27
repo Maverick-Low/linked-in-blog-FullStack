@@ -25,9 +25,7 @@ const Article = () => {
             return articleInfoDB;
 		} 
 		if(!isLoading){ 
-            const lol = loadArticleInfo();
-            
-            console.log("LOADEDINFO:", lol);
+            loadArticleInfo();
         }
 	
         

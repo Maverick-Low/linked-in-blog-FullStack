@@ -2,6 +2,12 @@ import express from "express";
 import {db, connectToDb} from './db.js';
 import fs from 'fs';
 import admin from 'firebase-admin';
+import { fileURLToPath } from "url";
+import path from "path";
+import "dotenv/config.js";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Firebase setup
 const credentials = JSON.parse(
@@ -14,6 +20,12 @@ admin.initializeApp({
 
 const app = express();
 app.use(express.json());
+app.use(express.static(path.join(__dirname, '../build')));
+
+// Handle requests where routes don't exist
+app.get(/^(?!\/api).+/, (req,res) => {
+    res.sendFile(path.join(__dirname, '../build/index.html'));
+})
 
 // Express middleware, next function called when middleware processing finished
 app.use( async(req, res, next) => {
@@ -109,10 +121,12 @@ app.post('/api/articles/:name/comments', async (req, res) => {
     }
 });
 
+const PORT = process.env.PORT || 3000;
+
 connectToDb( () => {
     console.log('Succesfully connected to database');
-    app.listen(3000, () => {
-        console.log('Server is listening on port 3000');
+    app.listen(PORT, () => {
+        console.log('Server is listening on port ' + PORT);
     });
 })
 
